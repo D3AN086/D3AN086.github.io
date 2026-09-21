@@ -1,0 +1,10 @@
+{
+  "name": "Downtown Empire",
+  "short_name": "Empire",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
+  "icons": []
+}
