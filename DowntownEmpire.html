@@ -797,6 +797,15 @@ input::placeholder,textarea::placeholder{color:#8b8b9a !important;opacity:1}
 .city-card .lock{position:absolute;top:8px;right:8px;z-index:2;font-size:10px;letter-spacing:.8px;padding:3px 7px;border-radius:999px;background:#1a1014;border:1px solid #8b1528;color:#e8b0b8}
 .city-card .here{position:absolute;top:8px;right:8px;z-index:2;font-size:10px;letter-spacing:.8px;padding:3px 7px;border-radius:999px;background:#142014;border:1px solid #3d9b6a;color:#9dffc0}
 
+.next-card .nx{font-size:13px;line-height:1.45;color:#d8d0c4}
+.heat-track{height:8px;background:#1a1216;border-radius:99px;overflow:hidden;margin:8px 0}
+.heat-fill{height:100%;background:linear-gradient(90deg,#5a1a22,#e0244a)}
+.rival-card .when{font-size:11px;color:var(--muted)}
+.live-grid label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--gold);text-transform:uppercase}
+.live-grid input,.live-grid textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0a0a0e;color:var(--text);font-size:14px}
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.live-grid .full{grid-column:1/-1}
+
 </style>
 </head>
 <body>
@@ -923,6 +932,15 @@ input::placeholder,textarea::placeholder{color:#8b8b9a !important;opacity:1}
         <div class="pb-sub">Your empire starts here</div>
       </div>
     </div>
+  <div class="cd next-card" id="next-card"><h3>Next unlock</h3><p class="nx" id="next-line">Play to reveal</p></div>
+  <div class="cd" id="heat-card"><h3>Heat</h3>
+    <div class="heat-track"><div class="heat-fill" id="heat-fill" style="width:0%"></div></div>
+    <p id="heat-line" style="font-size:12px;color:var(--muted)">Quiet</p>
+  </div>
+  <div class="cd rival-card" id="rival-card"><h3>Rival window</h3><p id="rival-line" style="font-size:13px">No mark yet</p>
+    <p class="when" id="rival-when"></p>
+    <button type="button" class="btn p" id="rival-hit" style="margin-top:8px">Mug rival</button>
+  </div>
   <div class="cd" id="event-card"><h3>Street event</h3><p id="event-line" style="font-size:13px"></p></div>
   <div class="cd" id="daily-card">
     <h3>Daily Drop</h3>
@@ -941,14 +959,11 @@ input::placeholder,textarea::placeholder{color:#8b8b9a !important;opacity:1}
     <button type="button" class="btn s" data-p="shop"><i class="fas fa-store"></i>Shop</button>
     <button type="button" class="btn s" data-p="inventory"><i class="fas fa-box"></i>Inventory</button>
     <button type="button" class="btn s" data-p="gang"><i class="fas fa-users"></i>Gang</button>
-    <button type="button" class="btn s" data-p="quests"><i class="fas fa-scroll"></i>Contracts</button>
-    <button type="button" class="btn s" data-p="board"><i class="fas fa-trophy"></i>Board</button>
+        <button type="button" class="btn s" data-p="board"><i class="fas fa-trophy"></i>Board</button>
     <button type="button" class="btn s" data-p="chat"><i class="fas fa-comments"></i>Chat</button>
-    <button type="button" class="btn s" data-p="hospital"><i class="fas fa-kit-medical"></i>Hospital</button>
-    <button type="button" class="btn s" data-p="market"><i class="fas fa-gavel"></i>Market</button>
+        <button type="button" class="btn s" data-p="market"><i class="fas fa-gavel"></i>Market</button>
     <button type="button" class="btn s" data-p="bounty"><i class="fas fa-skull"></i>Bounties</button>
-    <button type="button" class="btn s" data-p="staff"><i class="fas fa-id-badge"></i>Staff</button>
-    <button type="button" class="btn s" data-p="donator"><i class="fas fa-gem"></i>VIP</button>
+        <button type="button" class="btn s" data-p="donator"><i class="fas fa-gem"></i>VIP</button>
     <button type="button" class="btn s" data-p="editprofile"><i class="fas fa-user-pen"></i>Edit Profile</button>
     <button type="button" class="btn s ao" data-p="admin"><i class="fas fa-user-shield"></i>Admin</button>
     <button type="button" class="btn s wide" id="hub-logout"><i class="fas fa-right-from-bracket"></i> Logout</button>
@@ -1343,6 +1358,7 @@ input::placeholder,textarea::placeholder{color:#8b8b9a !important;opacity:1}
     <button data-a="vip"><i class="fas fa-gem"></i> VIP</button>
     <button data-a="boost"><i class="fas fa-bolt"></i> Boosters</button>
     <button data-a="add"><i class="fas fa-plus"></i> Add</button>
+    <button data-a="live"><i class="fas fa-fire"></i> Live</button>
     <button data-a="set"><i class="fas fa-gear"></i> Settings</button>
   </div>
   
@@ -1431,7 +1447,31 @@ input::placeholder,textarea::placeholder{color:#8b8b9a !important;opacity:1}
     <p style="font-size:11px;color:var(--muted);margin:4px 0 8px">Set cash to 0 for a pure point pack</p>
     <button class="btn p" id="bav">Add Pack</button></div>
   </div>
-  <div id="a-set-pay" class="cd" style="display:none"></div><div id="a-set" class="ap"><div class="cd"><h3>Economy</h3>
+  <div id="a-set-pay" class="cd" style="display:none"></div>
+<div id="a-live" class="ap"><div class="cd"><h3>What players feel</h3>
+  <p class="ds" style="margin-bottom:10px">Every field below changes Streets, crimes, travel and daily. Save writes to the live save.</p>
+  <div class="live-grid">
+    <label>Heat per crime <input type="number" id="lv-heat" value="12"></label>
+    <label>Hot at heat <input type="number" id="lv-hot" value="60"></label>
+    <label>Extra bust when hot % <input type="number" id="lv-bust" value="15"></label>
+    <label>Heat dropped by travel <input type="number" id="lv-cool" value="35"></label>
+    <label>Rival window minutes <input type="number" id="lv-rival" value="120"></label>
+    <label>Daily cash <input type="number" id="lv-day" value="2500"></label>
+    <label>Daily points <input type="number" id="lv-dpts" value="8"></label>
+    <label>Daily points if VIP <input type="number" id="lv-dptsv" value="15"></label>
+    <label>Streak bonus $ / day (comma) <input type="text" id="lv-streak" value="0,500,800,1200,1600,2200,3000"></label>
+    <label class="full">City sets — one line: cityId item,item,item
+      <textarea id="lv-sets" rows="6">ny blade,leather,beater
+chi chi_heat,kevlar,muscle
+hav hav_blade,cigar
+miami mia_coral,mia_boat
+sicily sic_lupara,sic_suit</textarea>
+    </label>
+  </div>
+  <div class="aa"><button type="button" class="btn p" id="lv-save">Save live rules</button></div>
+</div></div>
+
+<div id="a-set" class="ap"><div class="cd"><h3>Economy</h3>
     <div class="add-grid">
     <label>Energy refill $<input type="number" id="ser" value="500"></label>
     <label>Awake refill $<input type="number" id="ssr" value="350"></label>
@@ -1614,9 +1654,82 @@ function H(){return G.h||DH} function I(){const extra=G.i||[];const ids={};DI.fo
 } function V(){return G.v||DV}
 function B(){return G.b||DB}
 function S(){
-  if(!G.set)G.set={er:500,sr:350,nr:400,hit:15,day:2500,pe:10,pn:8,pa:8,pt:1,staffPts:25};
+  if(!G.set)G.set={};
+  const d={er:500,sr:350,nr:400,hit:15,day:2500,dpts:8,dptsv:15,pe:10,pn:8,pa:8,pt:1,staffPts:25,
+    heatPer:12,heatHot:60,heatBust:15,heatCool:35,rivalMins:120,
+    streak:'0,500,800,1200,1600,2200,3000',
+    setsText:'ny blade,leather,beater\nchi chi_heat,kevlar,muscle\nhav hav_blade,cigar\nmiami mia_coral,mia_boat\nsicily sic_lupara,sic_suit'};
+  Object.keys(d).forEach(function(k){if(G.set[k]==null)G.set[k]=d[k]});
   if(!G.set.payLink)G.set.payLink='https://monzo.me/deandickerson?h=UkD5MR&account_type=personal';
   return G.set;
+}
+function parseSets(){
+  const out={};
+  String(S().setsText||'').split(/\n/).forEach(function(line){
+    const t=line.trim();if(!t)return;
+    const sp=t.split(/\s+/);
+    const city=sp.shift();
+    const items=(sp.join(' ').split(',')).map(function(x){return x.trim()}).filter(Boolean);
+    if(city&&items.length)out[city]=items;
+  });
+  return out;
+}
+function hasItem(u,id){
+  return (u.inv||[]).some(function(x){return x===id||(x&&x.id===id)});
+}
+function nextUnlock(){
+  if(!U)return 'Keep playing';
+  const lvl=U.level||1;
+  const city=CITIES.find(function(c){return (c.lvl||1)>lvl});
+  const item=I().filter(function(x){return !x.drop && (x.lvl||1)>lvl}).sort(function(a,b){return (a.lvl||1)-(b.lvl||1)})[0];
+  const bits=[];
+  if(city) bits.push(city.name+' travel at Lv '+city.lvl+' · $'+f(city.cost||0));
+  if(item) bits.push(item.name+' in shops at Lv '+(item.lvl||1));
+  const sets=parseSets();
+  const cur=sets[U.city];
+  if(cur){
+    const miss=cur.filter(function(id){return !hasItem(U,id)});
+    const names=cur.map(function(id){const it=I().find(function(x){return x.id===id});return it?it.name:id});
+    if(miss.length) bits.push((CITIES.find(function(c){return c.id===U.city})||{}).name+' set: '+names.join(', '));
+    else bits.push('City set complete here');
+  }
+  return bits.join(' · ')||'You are at the top of the listed unlocks';
+}
+function tickRival(){
+  const mins=+S().rivalMins||120;
+  if(!G.rival||!G.rival.until||G.rival.until<Date.now()){
+    const names=Object.keys(G.users||{}).filter(function(n){return U&&n!==U.username});
+    const pick=names[Math.floor(Math.random()*Math.max(1,names.length))]||'Vito';
+    const cities=CITIES.map(function(c){return c.id});
+    G.rival={name:pick,city:cities[Math.floor(Math.random()*cities.length)]||'ny',until:Date.now()+mins*60000};
+  }
+  return G.rival;
+}
+function rLiveStreet(){
+  const nx=document.getElementById('next-line');
+  if(nx)nx.textContent=nextUnlock();
+  const heat=Math.max(0,Math.min(100,U.heat||0));
+  const fill=document.getElementById('heat-fill');
+  if(fill)fill.style.width=heat+'%';
+  const hl=document.getElementById('heat-line');
+  const hot=+S().heatHot||60;
+  if(hl)hl.textContent=heat>=hot?('Hot · cops watching · extra busts'):(heat>=30?'Warm · keep it quiet':'Quiet streets');
+  const ev=document.getElementById('event-card');
+  if(ev) ev.style.display=(typeof eventMult==='function'&&eventMult()>1)?'':'none';
+  const el=document.getElementById('event-line');
+  if(el&&typeof eventLabel==='function')el.textContent=eventLabel();
+  const rv=tickRival();
+  const rl=document.getElementById('rival-line');
+  const rw=document.getElementById('rival-when');
+  const left=Math.max(0,Math.floor(((rv.until||0)-Date.now())/60000));
+  const city=(CITIES.find(function(c){return c.id===rv.city})||{}).name||rv.city;
+  if(rl)rl.textContent=rv.name+' is in '+city;
+  if(rw)rw.textContent=left+' min left · same city to mug';
+  const hb=document.getElementById('rival-hit');
+  if(hb)hb.onclick=function(){
+    if(U.city!==rv.city){toast('Travel to '+city+' first');return}
+    if(typeof doHit==='function')doHit(rv.name);
+  };
 }
 
 const DBNAME='DowntownEmpireDB',DBVER=1,STORE='empire';
@@ -1772,6 +1885,9 @@ function clampUser(u){
   });
   if(u.level>200)u.level=200;
   if(!Array.isArray(u.inv))u.inv=[];
+  if(u.heat==null)u.heat=0;
+  if(u.streak==null)u.streak=0;
+  if(!Array.isArray(u.setsDone))u.setsDone=[];
 }
 function save(){
   if(!G)return;
@@ -2609,7 +2725,7 @@ document.getElementById('bar-h').style.width=Math.min(100,(U.health/U.maxH)*100)
 document.getElementById('dn').textContent=U.username;document.getElementById('dc').textContent=U.class;
 const h=H().find(x=>x.id===U.house)||H()[0],c=CITIES.find(x=>x.id===U.city)||CITIES[0];
 document.getElementById('dh').textContent=h.name;document.getElementById('dci').textContent=c.name;
-document.getElementById('db').textContent='+'+Math.round((h.gym-1)*100)+'%';document.getElementById('dr').textContent=rank(U.level);
+document.getElementById('db').textContent='+'+Math.round((h.gym-1)*100)+'%';document.getElementById('dr').textContent=rank(U.level);if(typeof rLiveStreet==='function')rLiveStreet();if(typeof rDaily==='function')rDaily();
 document.getElementById('oi').textContent=U.inv.length;document.getElementById('tp').textContent=U.str+U.def+U.agi+U.int;
 document.querySelectorAll('.ao').forEach(e=>e.classList.toggle('show',!!U.isAdmin));save()}
 function f(n){return(n||0).toLocaleString()}
@@ -2634,6 +2750,8 @@ function badgesFor(u){
   if((u.inv||[]).length>=3) b.push('Armed');
   if(u.house && u.house!=='street') b.push('Housed');
   if((u.friends||[]).length>=3) b.push('Connected Crew');
+  if((u.streak||0)>=3) b.push('Streak '+u.streak);
+  (u.setsDone||[]).forEach(function(id){b.push(id+' set')});
   return b;
 }
 function paintBadges(el,u){
@@ -2885,7 +3003,7 @@ function rCity(){
       if(here){toast('Already in '+c.name);return}
       if(locked){toast('Need level '+(c.lvl||1)+' for '+c.name);return}
       if(U.cash<fee){toast('$'+f(fee)+' to reach '+c.name);return}
-      U.cash-=fee;U.city=c.id;ui();save();toast('Arrived in '+c.name);
+      U.cash-=fee;U.city=c.id;U.heat=Math.max(0,(U.heat||0)-(+S().heatCool||35));ui();save();toast('Arrived in '+c.name+' · heat down');
       if(typeof noteQuest==='function')noteQuest('city',{city:c.id});
       rCity();
     };
@@ -3042,6 +3160,22 @@ function doQuestStep(qid){
   rQuests();
 }
 
+
+function checkCitySet(){
+  if(!U)return;
+  const sets=parseSets();
+  const cur=sets[U.city];
+  if(!cur||!cur.length)return;
+  if(cur.every(function(id){return hasItem(U,id)})){
+    if(!U.setsDone)U.setsDone=[];
+    if(U.setsDone.indexOf(U.city)<0){
+      U.setsDone.push(U.city);
+      U.points=(U.points||0)+25;
+      toast((CITIES.find(function(c){return c.id===U.city})||{}).name+' set complete · +◆25');
+    }
+  }
+}
+
 function rDaily(){
   if(!U)return;
   const today=new Date().toDateString();
@@ -3055,7 +3189,7 @@ function rDaily(){
   const card=document.getElementById('daily-card');
   if(card) card.style.display=(claimed && !staffDue)?'none':'';
   const dst=document.getElementById('dst');
-  if(dst) dst.textContent=claimed?(staffDue?'Staff pay still available':'Claimed'):'Cash + Energy + Nerve + Points';
+  if(dst) dst.textContent=claimed?(staffDue?'Staff pay still available':'Claimed'):('Streak day '+((U.streak||0)+1)+' · cash + energy + nerve');
   const bd=document.getElementById('bd');
   if(!bd)return;
   bd.disabled=claimed && !staffDue;
@@ -3066,8 +3200,13 @@ function rDaily(){
       if(U.staff && U.staffPay!==day){payStaffIfDue();ui();save();rDaily()}
       return;
     }
-    const cash=S().day||2500;
-    const pts=U.vip?15:8;
+    const yest=new Date(Date.now()-864e5).toDateString();
+    U.streak=(U.lastDaily===yest)?(U.streak||0)+1:1;
+    U.lastDaily=day;
+    const ladder=String(S().streak||'0').split(',').map(function(n){return +n||0});
+    const bonus=ladder[Math.min(U.streak,ladder.length)-1]||0;
+    const cash=(S().day||2500)+bonus;
+    const pts=U.vip?(S().dptsv||15):(S().dpts||8);
     U.daily=day;
     U.cash+=cash;
     U.points=(U.points||0)+pts;
@@ -3075,7 +3214,7 @@ function rDaily(){
     U.nerve=Math.min(U.maxN||50,(U.nerve||0)+15);
     payStaffIfDue();
     ui();save();rDaily();
-    toast('+$'+f(cash)+' · +◆'+pts+' · Energy/Nerve topped');
+    toast('Day '+U.streak+' · +$'+f(cash)+' · +◆'+pts);
   };
 }
 
@@ -3122,7 +3261,10 @@ function doJob(id){
   if((U.stam||0)<sc){toast('Need '+sc+' Awake');return}
   U.nerve=Math.max(0,(U.nerve||0)-nc);
   U.stam=Math.max(0,(U.stam||0)-sc);
-  if(Math.random()<0.10){
+  U.heat=Math.min(100,(U.heat||0)+(+S().heatPer||12));
+  const hot=+S().heatHot||60;
+  const extra=(U.heat>=hot)?((+S().heatBust||15)/100):0;
+  if(Math.random()<(0.08+extra)){
     U.jailUntil=Date.now()+45000;
     save();ui();toast('Busted · lockup 45s');
     return;
@@ -3134,6 +3276,7 @@ function doJob(id){
   if(U.inv.indexOf('case')>=0)cash=Math.floor(cash*1.1);
   U.cash=(U.cash||0)+cash;
   U.xp=(U.xp||0)+(j.x||10)*((typeof eventMult==='function')?eventMult():1);
+  checkCitySet();
   if(typeof noteQuest==='function')noteQuest('crime');
   if(typeof lvl==='function')lvl();
   save();ui();
@@ -3476,10 +3619,16 @@ function rGangCrimes(){
 
 function grantPack(p){
   if(!p||!U)return;
-  U.cash+=(p.cash||0);U.points=(U.points||0)+(p.points||0);
-  U.energy=Math.min(U.maxE,U.energy+(p.e||0));U.stam=Math.min(U.maxS,U.stam+(p.s||0));
+  if(!U.inv)U.inv=[];
+  U.cash=(U.cash||0)+(p.cash||0);
+  U.points=(U.points||0)+(p.points||0);
+  U.energy=Math.min(U.maxE||100,(U.energy||0)+(p.e||0));
+  U.stam=Math.min(U.maxS||50,(U.stam||0)+(p.s||0));
   U.vip=1;
-  (p.items||[]).forEach(function(id){if(!U.inv.includes(id)&&I().find(function(i){return i.id===id}))U.inv.push(id)});
+  (p.items||[]).forEach(function(id){
+    const has=U.inv.some(function(x){return x===id||(x&&x.id===id)});
+    if(!has&&I().find(function(i){return i.id===id}))U.inv.push(id);
+  });
   save();ui();toast(p.name+' unlocked');
 }
 function payLink(){return (S()&&S().payLink)||'https://monzo.me/deandickerson?h=UkD5MR&account_type=personal';}
@@ -3500,26 +3649,14 @@ function checkoutUrl(p){
     return u.toString();
   }catch(e){return base}
 }
-async function payPack(id,kind){
+function payPack(id,kind){
   const p=V().find(function(x){return x.id===id});if(!p)return;
-  if(U&&U.isAdmin){grantPack(p);return}
+  if(U&&(U.isAdmin||isOwner(U))){grantPack(p);return}
   const link=checkoutUrl(p);
-  if(window.PaymentRequest){
-    try{
-      const pr=new PaymentRequest(
-        kind==='card'
-          ?[{supportedMethods:'basic-card'}]
-          :[{supportedMethods:'https://apple.com/apple-pay'},{supportedMethods:'https://google.com/pay'}],
-        {total:{label:p.name,amount:{currency:'USD',value:String(p.usd||p.price||9.99)}}}
-      );
-      const can=await pr.canMakePayment();
-      if(can){
-        toast('Needs a live merchant to finish the charge');
-      }
-    }catch(e){}
-  }
-  if(link){window.open(link,'_blank');toast('Opening secure checkout');}
-  else toast('Checkout is not set');
+  if(!link){toast('Checkout is not set');return}
+  window._pendingPack=p.id;
+  window.open(link,'_blank');
+  toast('Checkout opened · '+p.pl);
 }
 function rVip(){
   const c=document.getElementById('vsl');if(!c)return;c.innerHTML='';
@@ -3544,10 +3681,36 @@ function rVip(){
   c.querySelectorAll('.pay-ap').forEach(function(b){b.onclick=function(){payPack(b.dataset.id,'apple')}});
   c.querySelectorAll('.pay-gp').forEach(function(b){b.onclick=function(){payPack(b.dataset.id,'google')}});
   c.querySelectorAll('.pay-card').forEach(function(b){b.onclick=function(){payPack(b.dataset.id,'card')}});
+  const claim=document.createElement('button');
+  claim.type='button';claim.className='btn s';claim.style.width='100%';claim.style.marginTop='10px';
+  claim.textContent="I've paid — unlock last pack";
+  claim.onclick=function(){
+    const id=window._pendingPack;
+    const p=V().find(function(x){return x.id===id});
+    if(!p){toast('Open a pack checkout first');return}
+    grantPack(p);window._pendingPack=null;
+  };
+  c.appendChild(claim);
 }
 function admin(){
 function $(id){return document.getElementById(id)}
 function on(id,fn){const el=$(id);if(el)el.onclick=fn}
+
+on('lv-save',function(){
+  const s=S();
+  s.heatPer=+$('lv-heat').value||12;
+  s.heatHot=+$('lv-hot').value||60;
+  s.heatBust=+$('lv-bust').value||15;
+  s.heatCool=+$('lv-cool').value||35;
+  s.rivalMins=+$('lv-rival').value||120;
+  s.day=+$('lv-day').value||2500;
+  s.dpts=+$('lv-dpts').value||8;
+  s.dptsv=+$('lv-dptsv').value||15;
+  s.streak=$('lv-streak').value||s.streak;
+  s.setsText=$('lv-sets').value||s.setsText;
+  save();toast('Live rules saved');
+});
+
 document.querySelectorAll('#amn button').forEach(b=>{
   b.onclick=function(e){
     e.preventDefault();e.stopPropagation();
@@ -3604,6 +3767,13 @@ function rAdDash(){
   }).join('');
 }
 function rAd(){if(!U||!U.isAdmin)return;rAdDash();
+  const s=S();
+  [['lv-heat','heatPer'],['lv-hot','heatHot'],['lv-bust','heatBust'],['lv-cool','heatCool'],['lv-rival','rivalMins'],['lv-day','day'],['lv-dpts','dpts'],['lv-dptsv','dptsv']].forEach(function(pair){
+    const el=document.getElementById(pair[0]);if(el&&s[pair[1]]!=null)el.value=s[pair[1]];
+  });
+  const st=document.getElementById('lv-streak');if(st)st.value=s.streak||st.value;
+  const sx=document.getElementById('lv-sets');if(sx)sx.value=s.setsText||sx.value;
+
 
 (function(){
   const sel=document.getElementById('astat-user');
