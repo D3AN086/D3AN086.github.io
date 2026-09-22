@@ -234,6 +234,32 @@
       };
       rGang._hooked=1;
     }
+    function hookPlay(){
+      if(window._playHook) return;
+      window._playHook=1;
+      document.addEventListener('click',function(e){
+        var t=e.target.closest('button,.btn,.tb,.dj');
+        if(!t) return;
+        if(t.classList.contains('tb') && typeof train==='function'){
+          e.preventDefault(); train(t.dataset.s); return;
+        }
+        if(t.classList.contains('dj') && typeof doJob==='function'){
+          e.preventDefault(); doJob(t.dataset.id); return;
+        }
+      });
+      if(typeof window.showPage==='function' && !window.showPage._play){
+        var sp=window.showPage;
+        window.showPage=function(id,fromSwipe){
+          sp(id,fromSwipe);
+          try{
+            if(id==='gym' && typeof gym==='function') gym();
+            if(id==='jobs' && typeof rJ==='function') rJ();
+          }catch(err){}
+        };
+        window.showPage._play=1;
+      }
+      try{ if(typeof gym==='function') gym(); if(typeof rJ==='function') rJ(); }catch(err){}
+    }
     function wire(){
       try{
         if(typeof auth==='function') auth();
@@ -242,6 +268,7 @@
         hookCore();
         hookGang();
         hookInv();
+        hookPlay();
       }catch(e){}
     }
     try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){}
