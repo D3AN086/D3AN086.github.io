@@ -24,6 +24,25 @@ iframe{flex:1;width:100%;border:0;min-height:0;background:#0a0a0c}
     <div class="city">New York · Open world crime</div>
   </div>
 </div>
-<iframe src="Index.html" title="Downtown Empire"></iframe>
+<iframe id="gameframe" src="Index.html" title="Downtown Empire"></iframe>
+<script>
+(function(){
+  var frame=document.getElementById('gameframe');
+  function strip(){
+    try{
+      var doc=frame.contentDocument;
+      if(!doc) return;
+      ['rival-card','event-card'].forEach(function(id){
+        var el=doc.getElementById(id);
+        if(el) el.remove();
+      });
+      var style=doc.createElement('style');
+      style.textContent='#rival-card,.rival-card,#event-card{display:none!important}';
+      doc.head.appendChild(style);
+    }catch(e){}
+  }
+  frame.addEventListener('load', strip);
+})();
+</script>
 </body>
 </html>
