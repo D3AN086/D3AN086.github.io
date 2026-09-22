@@ -22,16 +22,17 @@
       '#fight-ring .fs{font-size:11px;color:#8b8b9a;margin:4px 0}' +
       '#fight-ring .bar{height:8px;background:#1a1a22;border-radius:99px;overflow:hidden;margin-top:8px}' +
       '#fight-ring .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7a1020,#e23d4a);transition:width .25s}' +
-      '#fight-ring .vs{align-self:center;color:#f0d060;font-family:Cinzel,serif;letter-spacing:.2em}' +
+      '#fight-ring .vs{align-self:center;color:#f0d060;font-family:Cinzel,serif}' +
       '#fight-ring .flog{margin-top:16px;min-height:48px;color:#c9c0b0;text-align:center}' +
       '#fight-ring .fres{font-family:Cinzel,serif;font-size:22px;margin-top:8px}' +
       '#gym-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 12px}' +
       '#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px 4px;text-align:center}' +
       '#gym-stats .gk{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#8b8b9a}' +
       '#gym-stats .gv{font-family:Cinzel,serif;color:#f0d060;font-size:16px;margin-top:2px}' +
-      '#mainnav{display:grid;grid-template-columns:repeat(6,1fr)}' +
-      '#mainnav .nb{font-size:9px;padding:8px 2px}';
+      '.bn{display:flex!important}' +
+      '.bn .nb{flex:1;font-size:9px}';
     html=html.replace('</style>', css+'</style>');
+    html=html.replace('<button type="button" class="nb on" data-p="profile"><i class="fas fa-user"></i>Profile</button>','<button type="button" class="nb" data-p="inventory"><i class="fas fa-briefcase"></i>Inventory</button><button type="button" class="nb" data-p="profile"><i class="fas fa-user"></i>Profile</button>');
     var parsed=new DOMParser().parseFromString(html,'text/html');
     var gameScript='';
     parsed.querySelectorAll('script').forEach(function(s){ if(!s.src) gameScript += s.textContent+'\n'; s.remove(); });
@@ -47,38 +48,26 @@
       var list=typeof I==='function'?I():[];
       function find(id){ return list.find(function(x){return x.id===id})||null; }
       var w=find(eq.weapon), a=find(eq.armor), v=find(eq.vehicle);
-      var str=(u.str||0)+(w&&w.str||0)+(a&&a.str||0)+(v&&v.str||0);
-      var def=(u.def||0)+(w&&w.def||0)+(a&&a.def||0)+(v&&v.def||0);
-      var spd=(u.agi||0)+(w&&(w.agi||w.spd)||0)+(v&&(v.agi||v.spd)||0);
-      return { str:str, def:def, spd:spd, w:w?w.name:'Fists', a:a?a.name:'Street clothes' };
+      return { str:(u.str||0)+(w&&w.str||0)+(a&&a.str||0)+(v&&v.str||0), def:(u.def||0)+(w&&w.def||0)+(a&&a.def||0)+(v&&v.def||0), spd:(u.agi||0), w:w?w.name:'Fists', a:a?a.name:'Street clothes' };
     }
     function fightScene(name, done){
       var t=G&&G.users&&G.users[name];
       if(!t){ if(done) done(); return; }
       var box=document.getElementById('fight-ring');
       if(!box){ box=document.createElement('div'); box.id='fight-ring'; document.body.appendChild(box); }
-      var you=U&&U.username||'You';
-      var Y=gearOf(U), T=gearOf(t);
+      var you=U&&U.username||'You'; var Y=gearOf(U), T=gearOf(t);
       box.innerHTML='<div class="frs"><div class="fp you"><div class="fn">'+you+'</div><div class="fs">STR '+Y.str+' · SPD '+Y.spd+' · DEF '+Y.def+'</div><div class="fs">'+Y.w+' · '+Y.a+'</div><div class="bar"><i id="hp-you"></i></div></div><div class="vs">VS</div><div class="fp"><div class="fn">'+name+'</div><div class="fs">STR '+T.str+' · SPD '+T.spd+' · DEF '+T.def+'</div><div class="fs">'+T.w+' · '+T.a+'</div><div class="bar"><i id="hp-them"></i></div></div></div><div class="flog" id="flog"></div><div class="fres" id="fres"></div>';
       box.classList.add('on');
       var hy=100, ht=100, i=0;
-      var blows=['cuts in','lands a hook','drives through the guard','rips a shot','slips and counters'];
       var timer=setInterval(function(){
-        i++;
-        var youFirst=(Y.spd+Math.random()*8)>=(T.spd+Math.random()*8);
+        i++; var youFirst=(Y.spd+Math.random()*8)>=(T.spd+Math.random()*8);
         var atk=youFirst?Y:T, dfn=youFirst?T:Y;
-        var chance=0.38+(atk.spd-dfn.spd)/90;
-        if(chance<0.18)chance=0.18; if(chance>0.82)chance=0.82;
+        var chance=0.38+(atk.spd-dfn.spd)/90; if(chance<0.18)chance=0.18; if(chance>0.82)chance=0.82;
         var hit=Math.random()<chance;
         var dmg=Math.max(3, Math.round(atk.str*0.22 - dfn.def*0.12 + 4+Math.random()*8));
         var log=document.getElementById('flog');
-        if(youFirst){
-          if(hit){ ht=Math.max(0,ht-dmg); if(log) log.textContent=you+' '+blows[i%blows.length]+' with '+Y.w+' · -'+dmg; }
-          else { if(log) log.textContent=name+' soaks it on '+T.a; }
-        } else {
-          if(hit){ hy=Math.max(0,hy-dmg); if(log) log.textContent=name+' '+blows[i%blows.length]+' with '+T.w+' · -'+dmg; }
-          else { if(log) log.textContent=you+' soaks it on '+Y.a; }
-        }
+        if(youFirst){ if(hit){ ht=Math.max(0,ht-dmg); if(log) log.textContent=you+' hits with '+Y.w+' · -'+dmg; } else if(log) log.textContent=name+' soaks it on '+T.a; }
+        else { if(hit){ hy=Math.max(0,hy-dmg); if(log) log.textContent=name+' hits with '+T.w+' · -'+dmg; } else if(log) log.textContent=you+' soaks it on '+Y.a; }
         var el=document.getElementById('hp-you'); if(el) el.style.width=hy+'%';
         var em=document.getElementById('hp-them'); if(em) em.style.width=ht+'%';
         if(i>=8 || hy<=0 || ht<=0){
@@ -92,36 +81,21 @@
     function hookCore(){
       if(typeof doHit==='function' && !doHit._h){
         var h=doHit;
-        doHit=function(name){
-          if(doHit._busy) return;
-          doHit._busy=1;
-          fightScene(name, function(){ h(name); doHit._busy=0; });
-        };
+        doHit=function(name){ if(doHit._busy) return; doHit._busy=1; fightScene(name, function(){ h(name); doHit._busy=0; }); };
         doHit._h=1;
       }
     }
     function paintGymStats(){
       if(!U) return;
-      var page=document.getElementById('p-gym');
-      if(!page) return;
+      var page=document.getElementById('p-gym'); if(!page) return;
       var box=document.getElementById('gym-stats');
-      if(!box){
-        box=document.createElement('div');
-        box.id='gym-stats';
-        var tg=page.querySelector('.tg');
-        if(tg) tg.parentNode.insertBefore(box,tg);
-        else page.appendChild(box);
-      }
+      if(!box){ box=document.createElement('div'); box.id='gym-stats'; var tg=page.querySelector('.tg'); if(tg) tg.parentNode.insertBefore(box,tg); else page.appendChild(box); }
       var g=gearOf(U);
       box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div><div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div><div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div><div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>';
     }
     function hookGym(){
-      if(typeof uGym==='function' && !uGym._st){
-        var u=uGym; uGym=function(){ u(); paintGymStats(); }; uGym._st=1;
-      }
-      if(typeof train==='function' && !train._st){
-        var tr=train; train=function(s){ tr(s); paintGymStats(); }; train._st=1;
-      }
+      if(typeof uGym==='function' && !uGym._st){ var u=uGym; uGym=function(){ u(); paintGymStats(); }; uGym._st=1; }
+      if(typeof train==='function' && !train._st){ var tr=train; train=function(s){ tr(s); paintGymStats(); }; train._st=1; }
       if(typeof window.showPage==='function' && !window.showPage._gym){
         var sp=window.showPage;
         window.showPage=function(id,fromSwipe){ sp(id,fromSwipe); if(id==='gym') paintGymStats(); };
@@ -129,17 +103,14 @@
       }
     }
     function hookMenu(){
-      var bar=document.getElementById('mainnav');
+      var bar=document.getElementById('mainnav')||document.querySelector('nav.bn');
       if(!bar) return;
       if(!bar.querySelector('[data-p="inventory"]')){
         var b=document.createElement('button');
-        b.type='button';
-        b.className='nb';
-        b.setAttribute('data-p','inventory');
+        b.type='button'; b.className='nb'; b.setAttribute('data-p','inventory');
         b.innerHTML='<i class="fas fa-briefcase"></i>Inventory';
-        var fight=bar.querySelector('[data-p="hit"]');
-        if(fight&&fight.nextSibling) bar.insertBefore(b, fight.nextSibling);
-        else bar.appendChild(b);
+        var prof=bar.querySelector('[data-p="profile"]');
+        if(prof) bar.insertBefore(b, prof); else bar.appendChild(b);
       }
       if(typeof nav==='function') nav();
     }
