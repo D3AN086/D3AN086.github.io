@@ -9,10 +9,11 @@
 <body>
 <script>
 (function(){
-  var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/8a64f76da478e850d25821720ad19ca5e0dd3045/Index.html';
+  var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html';
   fetch(src).then(function(r){return r.text()}).then(function(html){
-    html=html.replace('</style>','#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card{display:none!important}</style>');
-    html=html.replace(/<div class="cd"><h3>Welcome,[\s\S]*?<\/div>/,'');
+    html=html.replace('</style>',
+      '#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}' +
+      '#daily-card{display:block!important}</style>');
     html=html.replace('Your empire starts here','The corner is yours');
     document.open();
     document.write(html);
