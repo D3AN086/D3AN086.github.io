@@ -28,6 +28,15 @@
       "Object.values(G.users).forEach(u=>{",
       "Object.values(G.users||{}).filter(function(u){return u&&!u.npc&&isOnline(u);}).forEach(u=>{"
     );
+    gameScript=gameScript.replace(
+      "'<p>Vault: <strong>$'+f(g.cash||0)+'</strong> · ◆ '+(g.points||0)+'</p>'+",
+      "'<p>Vault: <strong>$'+f(g.cash||0)+'</strong> · ◆ '+(g.points||0)+'</p>'+" +
+      "'<div class=\"fr\" style=\"margin-top:8px\"><input id=\"gpdep\" type=\"number\" min=\"1\" placeholder=\"Deposit points\" style=\"background:#0a0a0e;color:#f2f2f5;border:1px solid #2a2a32;border-radius:8px;padding:10px;font-size:16px\"><button class=\"btn p\" id=\"gpdepb\">Add ◆</button></div>'+"
+    );
+    gameScript=gameScript.replace(
+      "if(dep)dep.onclick=function(){",
+      "var pbtn=document.getElementById('gpdepb');if(pbtn)pbtn.onclick=function(){var n=+document.getElementById('gpdep').value||0;if(n<1){toast('Enter points');return;}if((U.points||0)<n){toast('Need ◆'+n);return;}U.points=(U.points||0)-n;g.points=(g.points||0)+n;save();ui();rGang();toast('Vault +◆'+n);};\nif(dep)dep.onclick=function(){"
+    );
     document.head.innerHTML=parsed.head.innerHTML;
     document.body.innerHTML=parsed.body.innerHTML;
     var run=document.createElement('script');
