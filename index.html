@@ -6,31 +6,9 @@
 <meta name="theme-color" content="#0a0a0c">
 <meta name="apple-mobile-web-app-title" content="Downtown Empire">
 <title>Downtown Empire</title>
-<style>html,body{margin:0;background:#0a0a0c;color:#c9c0b0;font-family:Inter,system-ui,sans-serif;height:100%}</style>
+<style>html,body{margin:0;background:#0a0a0c;color:#c9c0b0;font-family:system-ui,sans-serif;height:100%}</style>
 </head>
 <body>
-<script>
-(function(){
-  var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html';
-  fetch(src,{cache:'no-store'}).then(function(r){return r.text()}).then(function(html){
-    var css = '' +
-      '#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}' +
-      '#daily-card{display:block!important}' +
-      '#p-city .page-banner{display:none!important}' +
-      '.city-card .shot i,.city-card .shot .css-ico,.city-card .shot .art{display:none!important}' +
-      '.city-card .meta-left b{display:none}' +
-      '.city-card .go{flex-shrink:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#f0d060;border:1px solid rgba(212,175,55,.35);border-radius:999px;padding:6px 10px}';
-    html=html.replace('</style>', css + '</style>');
-    html=html.replace('Your empire starts here','The corner is yours');
-    var hook = '\n(function(){var prev=window.rCity;if(typeof prev!=="function")return;window.rCity=function(){prev.apply(this,arguments);var meta=document.getElementById("cc-meta");if(meta){meta.innerHTML=(meta.innerHTML||"").replace(/<span class=\"th-chip\">Cash[\\s\\S]*?<\\/span>/,"");}var list=document.getElementById("cl");if(!list||typeof CITIES==="undefined")return;var cards=list.querySelectorAll(".city-card");CITIES.forEach(function(c,i){var card=cards[i];if(!card)return;var shot=card.querySelector(".shot");if(shot&&c.img){shot.style.background="linear-gradient(180deg,rgba(8,6,10,.08),rgba(8,6,10,.78)),url('"+c.img+"') center/cover no-repeat";}});};})();\n';
-    html=html.replace('</script>\n</body>', hook + '</script>\n</body>');
-    document.open();
-    document.write(html);
-    document.close();
-  }).catch(function(){
-    document.body.textContent='Could not load Downtown Empire.';
-  });
-})();
-</script>
+<script src="js/boot-game.js"></script>
 </body>
 </html>
