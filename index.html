@@ -6,9 +6,14 @@
 <meta name="theme-color" content="#0a0a0c">
 <meta name="apple-mobile-web-app-title" content="Downtown Empire">
 <title>Downtown Empire</title>
-<style>html,body{margin:0;background:#0a0a0c;color:#c9c0b0;font-family:system-ui,sans-serif;height:100%}</style>
+<style>html,body{margin:0;height:100%;background:#0a0a0c}iframe{border:0;width:100%;height:100%;display:block}</style>
 </head>
 <body>
-<script src="js/boot-game.js"></script>
+<iframe title="Downtown Empire" src="https://cdn.jsdelivr.net/gh/D3AN086/D3AN086.github.io@2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html"></iframe>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});
+}
+</script>
 </body>
 </html>
