@@ -1,24 +1,33 @@
 (function(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(rs){
+      rs.forEach(function(r){ r.unregister(); });
+    });
+  }
   var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html';
+  var msg=document.getElementById('msg');
   fetch(src,{cache:'no-store'}).then(function(r){
     if(!r.ok) throw new Error('bad');
     return r.text();
   }).then(function(html){
     var css = '#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}' +
-      '#daily-card{display:block!important}' +
-      '#p-city .page-banner{display:none!important}' +
-      '.city-card .shot i,.city-card .shot .css-ico,.city-card .shot .art{display:none!important}' +
-      '.city-card .meta-left b{display:none}' +
-      '.city-card .go{flex-shrink:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#f0d060;border:1px solid rgba(212,175,55,.35);border-radius:999px;padding:6px 10px}';
+      '#daily-card{display:block!important}';
     html=html.replace('</style>', css + '</style>');
     html=html.replace('Your empire starts here','The corner is yours');
-    var hook = '(function(){var prev=window.rCity;if(typeof prev!=="function")return;window.rCity=function(){prev.apply(this,arguments);var meta=document.getElementById("cc-meta");if(meta){meta.innerHTML=(meta.innerHTML||"").replace(/<span class="th-chip">Cash[\\s\\S]*?<\\/span>/,"");}var list=document.getElementById("cl");if(!list||typeof CITIES==="undefined")return;var cards=list.querySelectorAll(".city-card");CITIES.forEach(function(c,i){var card=cards[i];if(!card)return;var shot=card.querySelector(".shot");if(shot&&c.img){shot.style.background="linear-gradient(180deg,rgba(8,6,10,.08),rgba(8,6,10,.78)),url('+c.img+') center/cover no-repeat";}});};})();';
-    var closeTag = '<' + '/script>';
-    html=html.replace(closeTag, hook + closeTag);
-    document.open();
-    document.write(html);
-    document.close();
-  }).catch(function(){
-    document.body.innerHTML='<p style="padding:24px;color:#c9c0b0">Could not load Downtown Empire. Check your connection and refresh.</p>';
+    var parsed=new DOMParser().parseFromString(html,'text/html');
+    var gameScript='';
+    parsed.querySelectorAll('script').forEach(function(s){
+      if(!s.src) gameScript += s.textContent + '\n';
+      s.remove();
+    });
+    document.documentElement.setAttribute('lang','en');
+    document.head.innerHTML=parsed.head.innerHTML;
+    document.body.innerHTML=parsed.body.innerHTML;
+    var run=document.createElement('script');
+    run.text=gameScript;
+    document.body.appendChild(run);
+  }).catch(function(err){
+    if(msg) msg.textContent='Could not load Downtown Empire. Refresh and try again.';
+    else document.body.innerHTML='<p style="padding:24px;color:#ccc">Could not load Downtown Empire.</p>';
   });
 })();
