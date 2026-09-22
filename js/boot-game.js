@@ -88,12 +88,25 @@
         var h=doHit; doHit=function(name){ if(doHit._busy) return; doHit._busy=1; fightScene(name,function(){ h(name); doHit._busy=0; }); }; doHit._h=1;
       }
     }
+    function gymGainPreview(s){
+      if(!U) return 2;
+      var stat=U[s]||1, lvl=U.level||1;
+      var gym=typeof totalGymMult==='function'?totalGymMult():1;
+      return Math.max(2, Math.round(((stat*0.085)+(lvl*0.55)+4)*gym));
+    }
+    function gymGain(s){
+      return Math.max(2, Math.round(gymGainPreview(s)*(0.88+Math.random()*0.24)));
+    }
     function paintGymStats(){
       if(!U) return; var page=document.getElementById('p-gym'); if(!page) return;
       var box=document.getElementById('gym-stats');
       if(!box){ box=document.createElement('div'); box.id='gym-stats'; var tg=page.querySelector('.tg'); if(tg) tg.parentNode.insertBefore(box,tg); else page.appendChild(box); }
       var g=gearOf(U);
       box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div><div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div><div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div><div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>';
+      ['str','def','agi','int'].forEach(function(k){
+        var e=document.getElementById('xb-'+k);
+        if(e) e.textContent='+'+gymGainPreview(k)+' / train';
+      });
     }
     function hookGym(){
       applyHouseAwake();
@@ -105,7 +118,7 @@
           var msg=document.getElementById('gm');
           if((U.stam||0)<cost){ if(msg){msg.textContent='Need '+cost+' Awake';msg.className='msg err';} toast('Need '+cost+' Awake'); return; }
           if(typeof locked==='function' && locked()) return;
-          var gain=Math.max(1,Math.floor(1*(typeof totalGymMult==='function'?totalGymMult():1)));
+          var gain=gymGain(s);
           U.stam-=cost; U[s]=(U[s]||0)+gain; U.xp=(U.xp||0)+3;
           if(typeof lvl==='function') lvl(); if(typeof ui==='function') ui(); if(typeof uGym==='function') uGym(); if(typeof save==='function') save();
           if(msg){msg.textContent='+'+gain+' '+s.toUpperCase();msg.className='msg ok';}
