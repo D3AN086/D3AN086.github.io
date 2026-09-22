@@ -1,0 +1,1 @@
+window.defaultSet=window.defaultSet||function(){return{er:500,sr:350,nr:400,hit:15,day:2500,dpts:8,dptsv:15,pe:10,pn:8,pa:8,pt:1,staffPts:25,heatPer:12,heatHot:60,heatBust:15,heatCool:35,rivalMins:120,streak:"0,500,800,1200,1600,2200,3000",setsText:"ny blade,leather,beater",payLink:"https://monzo.me/deandickerson?h=UkD5MR&account_type=personal"};};
