@@ -1,11 +1,9 @@
 (function(){
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); });
-  }
+  try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }); }catch(e){}
   var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html';
   function fail(){ document.body.innerHTML='<p style="padding:24px;color:#c9c0b0">Could not load Downtown Empire.</p>'; }
   fetch(src,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('bad'); return r.text(); }).then(function(html){
-    var css='#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}.chat-fab{display:none!important}.bn{display:flex!important}.bn .nb{flex:1;font-size:9px}#gym-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px;text-align:center}#gym-stats .gv{color:#f0d060;font-family:Cinzel,serif}#bank-vault .bv-amt{font-family:Cinzel,serif;font-size:28px;color:#f0d060}#bank-vault .bv-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}#bank-vault .bv-k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8b8b9a}';
+    var css='#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}.chat-fab{display:none!important}.bn{display:flex!important}.bn .nb{flex:1;font-size:9px}#gym-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px;text-align:center}#gym-stats .gv{color:#f0d060}#bank-vault .bv-amt{font-family:Cinzel,serif;font-size:26px;color:#f0d060}#bank-vault .bv-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}#bank-vault .bv-k{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8b8b9a}';
     html=html.replace('</style>', css+'</style>');
     html=html.replace('<button type="button" class="nb on" data-p="profile"><i class="fas fa-user"></i>Profile</button>','<button type="button" class="nb" data-p="inventory"><i class="fas fa-briefcase"></i>Inventory</button><button type="button" class="nb" data-p="profile"><i class="fas fa-user"></i>Profile</button>');
     html=html.replace(/5 Energy/g,'5 Awake'); html=html.replace(/4 Energy/g,'4 Awake');
@@ -18,34 +16,73 @@
     document.head.innerHTML=parsed.head.innerHTML;
     document.body.innerHTML=parsed.body.innerHTML;
     var run=document.createElement('script'); run.textContent=gameScript; document.body.appendChild(run);
+    function safe(fn){ try{ fn(); }catch(e){} }
     function gearOf(u){ var eq=u&&u.eq||{}, list=typeof I==='function'?I():[]; function find(id){return list.find(function(x){return x.id===id})||null} var w=find(eq.weapon),a=find(eq.armor); return {str:(u.str||0)+(w&&w.str||0),def:(u.def||0)+(a&&a.def||0),spd:(u.agi||0)}; }
     function houseAwake(h){ var map={street:0,apt:15,condo:30,man:50,pent:80,comp:120}; if(!h)return{max:0,tick:0}; return {max:map[h.id]||0,tick:h.id==='street'?0:1}; }
-    function applyHouseAwake(){ if(!U)return; var h=(typeof H==='function'?H():[]).find(function(x){return x.id===U.house}); var b=houseAwake(h); U.maxS=50+b.max; if(U.stam==null)U.stam=U.maxS; if(U.stam>U.maxS)U.stam=U.maxS; return b; }
+    function applyHouseAwake(){ if(!U)return; var h=(typeof H==='function'?H():[]).find(function(x){return x.id===U.house}); var b=houseAwake(h); U.maxS=Math.max(50,50+(b.max||0)); if(U.stam==null)U.stam=U.maxS; if(U.stam>U.maxS)U.stam=U.maxS; return b; }
     function gymGainPreview(s){ if(!U)return 2; var gym=typeof totalGymMult==='function'?totalGymMult():1; return Math.max(2,Math.round((((U[s]||1)*0.085)+((U.level||1)*0.55)+4)*gym)); }
     function gymGain(s){ return Math.max(2,Math.round(gymGainPreview(s)*(0.88+Math.random()*0.24))); }
     function userScore(u){ if(!u)return 0; return (u.level||1)*100+(u.xp||0)+(u.cash||0)+(u.bank||0)+(u.str||0)+(u.def||0); }
-    function persistUser(){ if(!U||!U.username)return; try{ localStorage.setItem('de_char_'+String(U.username).toLowerCase(), JSON.stringify(U)); localStorage.setItem('de_session', U.username); if(G) localStorage.setItem('de_v15', JSON.stringify(G)); }catch(e){} }
+    function persistUser(){ if(!U||!U.username)return; try{ localStorage.setItem('de_char_'+String(U.username).toLowerCase(), JSON.stringify(U)); localStorage.setItem('de_session', U.username); }catch(e){} }
+    function refillBar(type){
+      if(!U){ toast('Log in first'); return; }
+      applyHouseAwake();
+      var set=(typeof S==='function'?S():{})||{};
+      if(type==='energy'){ if((U.energy||0)>=(U.maxE||100)){toast('Energy full');return;} var c=set.pe||10; if((U.points||0)<c){toast('Need '+c+' Points');return;} U.points-=c; U.energy=U.maxE||100; }
+      else if(type==='nerve'){ if((U.nerve||0)>=(U.maxN||50)){toast('Nerve full');return;} var c2=set.pn||8; if((U.points||0)<c2){toast('Need '+c2+' Points');return;} U.points-=c2; U.nerve=U.maxN||50; }
+      else { if((U.stam||0)>=(U.maxS||50)){toast('Awake full');return;} var c3=set.pa||8; if((U.points||0)<c3){toast('Need '+c3+' Points');return;} U.points-=c3; U.stam=U.maxS||50; toast('Awake refilled'); }
+      if(typeof save==='function') save(); if(typeof ui==='function') ui();
+    }
     function bankRate(){ var h=(typeof H==='function'?H():[]).find(function(x){return U&&x.id===U.house}); var map={street:0.002,apt:0.004,condo:0.006,man:0.008,pent:0.01,comp:0.015}; return (h&&map[h.id]!=null)?map[h.id]:0.002; }
-    function payBankInterest(){ if(!U||!(U.bank>0)) return 0; if(!U.bankAt) U.bankAt=Date.now(); var hrs=Math.floor((Date.now()-U.bankAt)/3600000); if(hrs<1) return 0; var gain=Math.floor(U.bank*bankRate()*hrs); if(gain<1){ U.bankAt=Date.now(); return 0;} U.bank+=gain; U.bankAt=Date.now(); if(!U.bankLog) U.bankLog=[]; U.bankLog.unshift({t:Date.now(),text:'Interest +$'+gain}); persistUser(); return gain; }
-    function hookBank(){ var page=document.getElementById('p-bank'); if(page && !document.getElementById('bank-vault')){ var old=page.querySelector('.cd'); var wrap=document.createElement('div'); wrap.id='bank-vault'; wrap.className='cd'; if(old) old.replaceWith(wrap); else page.appendChild(wrap);} rBank=function(){ if(!U) return; payBankInterest(); var wrap=document.getElementById('bank-vault'); if(!wrap) return; var rate=(bankRate()*100).toFixed(1); var log=''; (U.bankLog||[]).forEach(function(x){ log+='<div class="bl">'+x.text+'</div>'; }); if(!log) log='<div class="bl">No moves yet</div>'; var money=typeof f==='function'?f:function(n){return n}; wrap.innerHTML='<h3>Private vault</h3><div class="bv-amt">$'+money(U.bank||0)+'</div><div class="bv-row"><div><div class="bv-k">Pocket</div><div>$'+money(U.cash||0)+'</div></div><div><div class="bv-k">Hourly cut</div><div>'+rate+'%</div></div></div><p style="font-size:12px;color:#8b8b9a">Street cash can get lifted. Vault cash earns a cut every hour.</p><div class="fr" style="gap:8px;flex-wrap:wrap;margin-top:8px"><input type="number" id="ba" min="1" placeholder="Amount" style="flex:2;background:#0a0a0e;color:#f2f2f5;border:1px solid #2a2a32;border-radius:8px;padding:10px"><button type="button" class="btn p" id="bdep">Deposit</button><button type="button" class="btn s" id="bwdr">Withdraw</button></div><div class="fr" style="gap:8px;margin-top:8px"><button type="button" class="btn s" id="bdep-all">Stash all</button><button type="button" class="btn s" id="bwdr-all">Pull all</button></div><div id="bank-log" style="margin-top:14px"><h3>Ledger</h3>'+log+'</div>'; function note(txt){ if(!U.bankLog)U.bankLog=[]; U.bankLog.unshift({t:Date.now(),text:txt}); } document.getElementById('bdep').onclick=function(){ var a=+document.getElementById('ba').value||0; if(a<=0||U.cash<a){toast('Need cash');return;} U.cash-=a; U.bank=(U.bank||0)+a; note('Deposited $'+a); persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); rBank(); toast('Stashed $'+a); }; document.getElementById('bwdr').onclick=function(){ var a=+document.getElementById('ba').value||0; if(a<=0||(U.bank||0)<a){toast('Need vault cash');return;} U.bank-=a; U.cash+=a; note('Withdrew $'+a); persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); rBank(); toast('Pulled $'+a); }; document.getElementById('bdep-all').onclick=function(){ var a=Math.floor(U.cash||0); if(a<1){toast('Pockets empty');return;} U.cash=0; U.bank=(U.bank||0)+a; note('Stashed all $'+a); persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); rBank(); toast('Stashed $'+a); }; document.getElementById('bwdr-all').onclick=function(){ var a=Math.floor(U.bank||0); if(a<1){toast('Vault empty');return;} U.bank=0; U.cash+=a; note('Pulled all $'+a); persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); rBank(); toast('Pulled $'+a); }; }; try{ rBank(); }catch(e){} }
-    function listBaks(){ try{ return JSON.parse(localStorage.getItem('de_baks')||'[]'); }catch(e){ return []; } }
-    function takeBackup(why){ if(!U||!U.username) return; var list=listBaks(); var snap={t:Date.now(),why:why||'auto',name:U.username,score:userScore(U),user:JSON.parse(JSON.stringify(U))}; if(list[0] && list[0].score===snap.score && (snap.t-list[0].t)<20000) return; list.unshift(snap); if(list.length>8) list=list.slice(0,8); try{ localStorage.setItem('de_baks', JSON.stringify(list)); }catch(e){} paintBackup(); }
-    function restoreBak(i){ var b=listBaks()[i]; if(!b||!b.user){ toast('No backup'); return; } U=b.user; if(G&&G.users) G.users[U.username]=U; persistUser(); if(typeof save==='function') save(); if(typeof ui==='function') ui(); toast('Restored'); paintBackup(); }
-    function paintBackup(){ var page=document.getElementById('p-profile'); if(!page) return; var box=document.getElementById('bak-box'); if(!box){ box=document.createElement('div'); box.id='bak-box'; box.className='cd'; page.appendChild(box); } var rows=''; listBaks().forEach(function(b,i){ rows+='<div class="bl" style="display:flex;justify-content:space-between;gap:8px"><div><div style="color:#f0d060">'+new Date(b.t).toLocaleString()+'</div><div style="font-size:11px;color:#8b8b9a">'+(b.why||'auto')+'</div></div><button type="button" class="btn s bak-r" data-i="'+i+'">Restore</button></div>'; }); if(!rows) rows='<div class="bl">No backups yet</div>'; box.innerHTML='<h3>Auto backup</h3>'+rows; box.querySelectorAll('.bak-r').forEach(function(btn){ btn.onclick=function(){ restoreBak(+btn.getAttribute('data-i')); }; }); }
-    var CLOUD='https://jsonblob.com/api/jsonBlob';
-    function cloudId(){ return localStorage.getItem('de_cloud_id')||''; }
-    function setCloudId(id){ if(id) localStorage.setItem('de_cloud_id', id); }
-    function cloudPush(){ if(!U) return; var id=cloudId(); var url=id?(CLOUD+'/'+id):CLOUD; fetch(url,{method:id?'PUT':'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({v:1,t:Date.now(),user:U,G:G})}).then(function(r){ var loc=r.headers.get('X-jsonblob')||r.headers.get('Location')||''; var m=String(loc).match(/jsonBlob\/([A-Za-z0-9-]+)/); if(m) setCloudId(m[1]); else if(!id && r.headers.get('X-jsonblob')) setCloudId(r.headers.get('X-jsonblob')); localStorage.setItem('de_cloud_at', String(Date.now())); paintCloud(); }).catch(function(){}); }
-    function cloudPull(){ var id=cloudId(); if(!id) return Promise.resolve(); return fetch(CLOUD+'/'+id,{headers:{'Accept':'application/json'}}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(data){ if(data&&data.user&&U&&userScore(data.user)>userScore(U)){ U=data.user; if(G&&G.users) G.users[U.username]=U; } persistUser(); if(typeof ui==='function') ui(); }).catch(function(){}); }
-    function paintCloud(){ var page=document.getElementById('p-profile'); if(!page) return; var box=document.getElementById('cloud-box'); if(!box){ box=document.createElement('div'); box.id='cloud-box'; box.className='cd'; page.appendChild(box); } var id=cloudId(); var at=localStorage.getItem('de_cloud_at'); var when=at?new Date(+at).toLocaleString():'not yet'; box.innerHTML='<h3>Cloud save</h3><input id="cloud-id" value="'+(id||'')+'" placeholder="Paste code" style="width:100%;background:#0a0a0e;color:#f2f2f5;border:1px solid #2a2a32;border-radius:8px;padding:10px"><div style="font-size:11px;color:#8b8b9a;margin:8px 0">Last push \u00b7 '+when+'</div><div class="fr" style="gap:8px"><button type="button" class="btn p" id="cloud-push">Push</button><button type="button" class="btn s" id="cloud-pull">Pull</button><button type="button" class="btn s" id="cloud-copy">Copy</button></div>'; document.getElementById('cloud-push').onclick=function(){ var v=(document.getElementById('cloud-id').value||'').trim(); if(v) setCloudId(v); cloudPush(); toast('Pushing'); }; document.getElementById('cloud-pull').onclick=function(){ var v=(document.getElementById('cloud-id').value||'').trim(); if(v) setCloudId(v); cloudPull().then(function(){ toast('Pulled'); }); }; document.getElementById('cloud-copy').onclick=function(){ var v=cloudId(); if(!v){toast('Push first');return;} if(navigator.clipboard) navigator.clipboard.writeText(v); toast('Copied'); }; }
-    function paintGymStats(){ if(!U) return; var page=document.getElementById('p-gym'); if(!page) return; var box=document.getElementById('gym-stats'); if(!box){ box=document.createElement('div'); box.id='gym-stats'; var tg=page.querySelector('.tg'); if(tg) tg.parentNode.insertBefore(box,tg); else page.appendChild(box); } var g=gearOf(U); box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div><div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div><div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div><div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>'; }
-    function hookGym(){ applyHouseAwake(); if(typeof train==='function'){ train=function(s){ if(!U) return; applyHouseAwake(); var cost={str:5,def:5,agi:4,int:4}[s]||5; if((U.stam||0)<cost){ toast('Need '+cost+' Awake'); return; } var gain=gymGain(s); U.stam-=cost; U[s]=(U[s]||0)+gain; U.xp=(U.xp||0)+3; if(typeof save==='function') save(); if(typeof ui==='function') ui(); toast('+'+gain); paintGymStats(); }; } }
-    function hookPersist(){ if(typeof save==='function' && !save._p){ var s=save; save=function(){ try{ if(U&&G&&G.users) G.users[U.username]=U; persistUser(); }catch(e){} return s.apply(this,arguments); }; save._p=1; } if(!window._deAutoSave){ window._deAutoSave=1; setInterval(function(){ if(U&&typeof save==='function') save(); },8000); setInterval(function(){ if(U){ if(typeof save==='function') save(); takeBackup('auto'); cloudPush(); } },120000); } }
+    function hookBank(){
+      var page=document.getElementById('p-bank'); if(!page) return;
+      var wrap=document.getElementById('bank-vault');
+      if(!wrap){ wrap=document.createElement('div'); wrap.id='bank-vault'; wrap.className='cd'; var old=page.querySelector('.cd'); if(old) old.replaceWith(wrap); else page.appendChild(wrap); }
+      if(!U) return;
+      var money=typeof f==='function'?f:function(n){return n};
+      var rate=(bankRate()*100).toFixed(1);
+      wrap.innerHTML='<h3>Private vault</h3><div class="bv-amt">$'+money(U.bank||0)+'</div><div class="bv-row"><div><div class="bv-k">Pocket</div><div>$'+money(U.cash||0)+'</div></div><div><div class="bv-k">Hourly cut</div><div>'+rate+'%</div></div></div><div class="fr" style="gap:8px;flex-wrap:wrap;margin-top:8px"><input type="number" id="ba" min="1" placeholder="Amount" style="flex:2;background:#0a0a0e;color:#f2f2f5;border:1px solid #2a2a32;border-radius:8px;padding:10px"><button type="button" class="btn p" id="bdep">Deposit</button><button type="button" class="btn s" id="bwdr">Withdraw</button></div><div class="fr" style="gap:8px;margin-top:8px"><button type="button" class="btn s" id="bdep-all">Stash all</button><button type="button" class="btn s" id="bwdr-all">Pull all</button></div>';
+      var dep=document.getElementById('bdep'), wdr=document.getElementById('bwdr'), da=document.getElementById('bdep-all'), wa=document.getElementById('bwdr-all');
+      if(dep) dep.onclick=function(){ var a=+document.getElementById('ba').value||0; if(a<=0||U.cash<a){toast('Need cash');return;} U.cash-=a; U.bank=(U.bank||0)+a; persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); hookBank(); toast('Stashed'); };
+      if(wdr) wdr.onclick=function(){ var a=+document.getElementById('ba').value||0; if(a<=0||(U.bank||0)<a){toast('Need vault cash');return;} U.bank-=a; U.cash+=a; persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); hookBank(); toast('Pulled'); };
+      if(da) da.onclick=function(){ var a=Math.floor(U.cash||0); if(a<1)return; U.cash=0; U.bank=(U.bank||0)+a; persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); hookBank(); toast('Stashed'); };
+      if(wa) wa.onclick=function(){ var a=Math.floor(U.bank||0); if(a<1)return; U.bank=0; U.cash+=a; persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); hookBank(); toast('Pulled'); };
+    }
+    function hookGym(){
+      applyHouseAwake();
+      if(typeof train==='function'){ train=function(s){ if(!U)return; applyHouseAwake(); var cost={str:5,def:5,agi:4,int:4}[s]||5; if((U.stam||0)<cost){ toast('Need '+cost+' Awake'); return;} var gain=gymGain(s); U.stam-=cost; U[s]=(U[s]||0)+gain; U.xp=(U.xp||0)+3; persistUser(); if(typeof save==='function')save(); if(typeof ui==='function')ui(); toast('+'+gain); }; }
+      if(typeof tickBars==='function' && !tickBars._ok){ var tb=tickBars; tickBars=function(){ applyHouseAwake(); tb(); }; tickBars._ok=1; }
+    }
+    function hookPersist(){
+      if(typeof save==='function' && !save._p){ var s=save; save=function(){ try{ if(U&&G&&G.users) G.users[U.username]=U; persistUser(); }catch(e){} try{ return s.apply(this,arguments);}catch(e){} }; save._p=1; }
+      if(!window._deAutoSave){ window._deAutoSave=1; setInterval(function(){ if(U&&typeof save==='function') try{ save(); }catch(e){} },8000); }
+    }
     function hookMenu(){ var bar=document.getElementById('mainnav')||document.querySelector('nav.bn'); if(!bar) return; if(!bar.querySelector('[data-p="inventory"]')){ var b=document.createElement('button'); b.type='button'; b.className='nb'; b.setAttribute('data-p','inventory'); b.innerHTML='<i class="fas fa-briefcase"></i>Inventory'; var prof=bar.querySelector('[data-p="profile"]'); if(prof) bar.insertBefore(b,prof); else bar.appendChild(b); } }
-    function hookPlay(){ if(window._playHook) return; window._playHook=1; document.addEventListener('click',function(e){ var t=e.target.closest('button,.tb,.dj'); if(!t) return; if(t.classList.contains('tb') && typeof train==='function'){ e.preventDefault(); train(t.dataset.s); } if(t.classList.contains('dj') && typeof doJob==='function'){ e.preventDefault(); doJob(t.dataset.id); } }); }
-    function hookPages(){ if(typeof window.showPage==='function' && !window.showPage._all){ var sp=window.showPage; window.showPage=function(id,fs){ sp(id,fs); if(id==='gym'){ applyHouseAwake(); paintGymStats(); } if(id==='bank'){ hookBank(); rBank(); } if(id==='profile'){ paintBackup(); paintCloud(); } }; window.showPage._all=1; } }
-    function wire(){ try{ if(typeof auth==='function') auth(); hookPersist(); hookGym(); hookBank(); hookMenu(); hookPlay(); hookPages(); paintBackup(); paintCloud(); }catch(e){} }
-    function afterLoad(){ wire(); cloudPull(); try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){} }
+    function hookPlay(){
+      if(window._playHook) return; window._playHook=1;
+      document.addEventListener('click',function(e){
+        var t=e.target.closest('button,.tb,.dj,#tap-awake,#tap-energy,#tap-nerve,.mbar-tap');
+        if(!t) return;
+        if(t.id==='tap-awake' || (t.classList.contains('mbar-tap') && t.id==='tap-awake')){ e.preventDefault(); refillBar('awake'); return; }
+        if(t.id==='tap-energy'){ e.preventDefault(); refillBar('energy'); return; }
+        if(t.id==='tap-nerve'){ e.preventDefault(); refillBar('nerve'); return; }
+        if(t.classList.contains('tb') && typeof train==='function'){ e.preventDefault(); train(t.dataset.s); }
+        if(t.classList.contains('dj') && typeof doJob==='function'){ e.preventDefault(); doJob(t.dataset.id); }
+      }, true);
+    }
+    function hookPages(){
+      if(typeof window.showPage==='function' && !window.showPage._all){
+        var sp=window.showPage;
+        window.showPage=function(id,fs){ try{ sp(id,fs);}catch(e){} if(id==='gym'){ applyHouseAwake(); } if(id==='bank') hookBank(); };
+        window.showPage._all=1;
+      }
+      if(typeof setupBars==='function') try{ setupBars(); }catch(e){}
+    }
+    function wire(){
+      safe(function(){ if(typeof auth==='function') auth(); });
+      safe(hookPersist); safe(hookGym); safe(hookBank); safe(hookMenu); safe(hookPlay); safe(hookPages);
+    }
+    function afterLoad(){ wire(); try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){} safe(hookPages); }
     if(typeof load==='function') Promise.resolve(load()).then(afterLoad).catch(afterLoad); else afterLoad();
   }).catch(fail);
 })();
