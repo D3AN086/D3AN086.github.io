@@ -24,7 +24,12 @@
       '#fight-ring .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7a1020,#e23d4a);transition:width .25s}' +
       '#fight-ring .vs{align-self:center;color:#f0d060;font-family:Cinzel,serif;letter-spacing:.2em}' +
       '#fight-ring .flog{margin-top:16px;min-height:48px;color:#c9c0b0;text-align:center}' +
-      '#fight-ring .fres{font-family:Cinzel,serif;font-size:22px;margin-top:8px}';
+      '#fight-ring .fres{font-family:Cinzel,serif;font-size:22px;margin-top:8px}' +
+      '#gym-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 12px}' +
+      '#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px 4px;text-align:center}' +
+      '#gym-stats .gk{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#8b8b9a}' +
+      '#gym-stats .gv{font-family:Cinzel,serif;color:#f0d060;font-size:16px;margin-top:2px}' +
+      '#gym-stats .gb{font-size:10px;color:#9dffc0}';
     html=html.replace('</style>', css+'</style>');
     var parsed=new DOMParser().parseFromString(html,'text/html');
     var gameScript='';
@@ -94,6 +99,37 @@
         doHit._h=1;
       }
     }
+    function paintGymStats(){
+      if(!U) return;
+      var page=document.getElementById('p-gym');
+      if(!page) return;
+      var box=document.getElementById('gym-stats');
+      if(!box){
+        box=document.createElement('div');
+        box.id='gym-stats';
+        var tg=page.querySelector('.tg');
+        if(tg) tg.parentNode.insertBefore(box,tg);
+        else page.appendChild(box);
+      }
+      var g=gearOf(U);
+      box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div>'+
+        '<div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div>'+
+        '<div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div>'+
+        '<div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>';
+    }
+    function hookGym(){
+      if(typeof uGym==='function' && !uGym._st){
+        var u=uGym; uGym=function(){ u(); paintGymStats(); }; uGym._st=1;
+      }
+      if(typeof train==='function' && !train._st){
+        var tr=train; train=function(s){ tr(s); paintGymStats(); }; train._st=1;
+      }
+      if(typeof window.showPage==='function' && !window.showPage._gym){
+        var sp=window.showPage;
+        window.showPage=function(id,fromSwipe){ sp(id,fromSwipe); if(id==='gym') paintGymStats(); };
+        window.showPage._gym=1;
+      }
+    }
     function hookPlay(){
       if(window._playHook) return; window._playHook=1;
       document.addEventListener('click',function(e){
@@ -108,7 +144,7 @@
       try{
         if(typeof auth==='function') auth();
         if(typeof nav==='function') nav();
-        hookCore(); hookPlay();
+        hookCore(); hookGym(); hookPlay();
       }catch(e){}
     }
     try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){}
