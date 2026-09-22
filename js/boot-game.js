@@ -12,7 +12,7 @@
     if(!r.ok) throw new Error('bad');
     return r.text();
   }).then(function(html){
-    var css = '#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}#daily-card{display:block!important}.chat-fab{display:none!important}';
+    var css = '#next-card,#heat-card,#rival-card,#event-card,.rival-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}.chat-fab{display:none!important}';
     html=html.replace('</style>', css + '</style>');
     html=html.replace('Your empire starts here','The corner is yours');
     var parsed=new DOMParser().parseFromString(html,'text/html');
@@ -24,6 +24,10 @@
     gameScript=gameScript.replace('let U=null,G=null;','let U=null,G={set:{},users:{}};');
     gameScript=gameScript.replace('function S(){\n  if(!G.set)G.set={};','function S(){ if(!G) G={}; if(!G.set) G.set={};');
     gameScript=gameScript.replace("if(apay){apay.value=(S().payLink||'');}","if(apay && G){apay.value=((S()||{}).payLink||'');}");
+    gameScript=gameScript.replace(
+      "Object.values(G.users).forEach(u=>{",
+      "Object.values(G.users||{}).filter(function(u){return u&&!u.npc&&isOnline(u);}).forEach(u=>{"
+    );
     document.head.innerHTML=parsed.head.innerHTML;
     document.body.innerHTML=parsed.body.innerHTML;
     var run=document.createElement('script');
@@ -33,6 +37,8 @@
       try{
         if(typeof auth==='function') auth();
         if(typeof nav==='function') nav();
+        if(typeof rDaily==='function') rDaily();
+        if(typeof ui==='function') ui();
       }catch(e){}
     }
     try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){}
