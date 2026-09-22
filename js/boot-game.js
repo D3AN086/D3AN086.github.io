@@ -29,7 +29,8 @@
       '#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px 4px;text-align:center}' +
       '#gym-stats .gk{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#8b8b9a}' +
       '#gym-stats .gv{font-family:Cinzel,serif;color:#f0d060;font-size:16px;margin-top:2px}' +
-      '#gym-stats .gb{font-size:10px;color:#9dffc0}';
+      '#mainnav{display:grid;grid-template-columns:repeat(6,1fr)}' +
+      '#mainnav .nb{font-size:9px;padding:8px 2px}';
     html=html.replace('</style>', css+'</style>');
     var parsed=new DOMParser().parseFromString(html,'text/html');
     var gameScript='';
@@ -112,10 +113,7 @@
         else page.appendChild(box);
       }
       var g=gearOf(U);
-      box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div>'+
-        '<div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div>'+
-        '<div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div>'+
-        '<div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>';
+      box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div><div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div><div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div><div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>';
     }
     function hookGym(){
       if(typeof uGym==='function' && !uGym._st){
@@ -129,6 +127,21 @@
         window.showPage=function(id,fromSwipe){ sp(id,fromSwipe); if(id==='gym') paintGymStats(); };
         window.showPage._gym=1;
       }
+    }
+    function hookMenu(){
+      var bar=document.getElementById('mainnav');
+      if(!bar) return;
+      if(!bar.querySelector('[data-p="inventory"]')){
+        var b=document.createElement('button');
+        b.type='button';
+        b.className='nb';
+        b.setAttribute('data-p','inventory');
+        b.innerHTML='<i class="fas fa-briefcase"></i>Inventory';
+        var fight=bar.querySelector('[data-p="hit"]');
+        if(fight&&fight.nextSibling) bar.insertBefore(b, fight.nextSibling);
+        else bar.appendChild(b);
+      }
+      if(typeof nav==='function') nav();
     }
     function hookPlay(){
       if(window._playHook) return; window._playHook=1;
@@ -144,7 +157,7 @@
       try{
         if(typeof auth==='function') auth();
         if(typeof nav==='function') nav();
-        hookCore(); hookGym(); hookPlay();
+        hookCore(); hookGym(); hookMenu(); hookPlay();
       }catch(e){}
     }
     try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){}
