@@ -3,11 +3,11 @@
   var sources=[
     'empire.html?v=admin3',
     'DowntownEmpire.html?v=admin3',
-    'index-game.html?v=admin3'
+    'https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html'
   ];
   var msg=document.getElementById('msg');
   function fail(){
-    if(msg) msg.textContent='Could not load Downtown Empire. Upload empire.html to the repo root.';
+    if(msg) msg.textContent='Could not load Downtown Empire.';
   }
   function next(i){
     if(i>=sources.length){ fail(); return; }
