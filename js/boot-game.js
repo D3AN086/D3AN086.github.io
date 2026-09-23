@@ -1,37 +1,53 @@
 (function(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(function(rs){ rs.forEach(function(r){ r.unregister(); }); }); }catch(e){}
-  var src='https://raw.githubusercontent.com/D3AN086/D3AN086.github.io/2bd2a9c9c174e664961d61ff599f2809ddcb8960/Index.html';
-  function fail(){ document.body.innerHTML='<p style="padding:24px;color:#c9c0b0">Could not load Downtown Empire.</p>'; }
-  fetch(src,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('bad'); return r.text(); }).then(function(html){
-    var css='#fight-ring{position:fixed;inset:0;z-index:90;background:rgba(6,4,8,.94);display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}#fight-ring.on{display:flex}#fight-ring .frs{display:flex;gap:14px;width:100%;max-width:420px}#fight-ring .fp{flex:1;background:#120e14;border:1px solid #2a2a32;border-radius:14px;padding:14px;text-align:center}#fight-ring .fn{color:#f0d060}#fight-ring .bar{height:8px;background:#1a1a22;border-radius:99px;overflow:hidden;margin-top:8px}#fight-ring .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7a1020,#e23d4a)}#next-card,#heat-card,#rival-card,#event-card,.next-card,#p-dashboard .cd:has(#dn){display:none!important}.chat-fab{display:none!important}.bn{display:flex!important}.bn .nb{flex:1;font-size:9px}#gym-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}#gym-stats .gs{background:#120e14;border:1px solid #2a2a32;border-radius:10px;padding:8px;text-align:center}#gym-stats .gv{color:#f0d060}#bank-vault .bv-amt{font-family:Cinzel,serif;font-size:26px;color:#f0d060}';
+  var sources=[
+    'empire.html?v=admin3',
+    'DowntownEmpire.html?v=admin3',
+    'index-game.html?v=admin3'
+  ];
+  var msg=document.getElementById('msg');
+  function fail(){
+    if(msg) msg.textContent='Could not load Downtown Empire. Upload empire.html to the repo root.';
+  }
+  function next(i){
+    if(i>=sources.length){ fail(); return; }
+    fetch(sources[i],{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('bad');
+      return r.text();
+    }).then(boot).catch(function(){ next(i+1); });
+  }
+  function boot(html){
+    var css='#p-admin .pb{padding-top:8px}#amn.am{position:sticky;top:0;z-index:8;display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding:6px 0 10px;margin-bottom:8px;background:#0a0a0c}#amn.am button{flex:0 0 auto;min-height:44px;min-width:92px;padding:10px 12px;touch-action:manipulation}#p-admin .btn,#p-admin button{min-height:44px;touch-action:manipulation}#p-admin input,#p-admin select,#p-admin textarea{min-height:40px;font-size:16px}#p-admin .aa{position:sticky;bottom:70px;z-index:7;background:#0a0a0c;padding:8px 0}';
     html=html.replace('</style>', css+'</style>');
-    html=html.replace('<button type="button" class="nb on" data-p="profile"><i class="fas fa-user"></i>Profile</button>','<button type="button" class="nb" data-p="inventory"><i class="fas fa-briefcase"></i>Inventory</button><button type="button" class="nb" data-p="profile"><i class="fas fa-user"></i>Profile</button>');
-    html=html.replace(/5 Energy/g,'5 Awake'); html=html.replace(/4 Energy/g,'4 Awake');
     var parsed=new DOMParser().parseFromString(html,'text/html');
     var gameScript='';
-    parsed.querySelectorAll('script').forEach(function(s){ if(!s.src) gameScript+=s.textContent+'\n'; s.remove(); });
-    gameScript=gameScript.replace('let U=null,G=null;','let U=null,G={set:{},users:{}};');
-    gameScript=gameScript.replace('await load();','/* boot load */');
+    parsed.querySelectorAll('script').forEach(function(s){
+      if(!s.src) gameScript+=s.textContent+'\n';
+      s.remove();
+    });
     document.head.innerHTML=parsed.head.innerHTML;
     document.body.innerHTML=parsed.body.innerHTML;
-    var run=document.createElement('script'); run.textContent=gameScript; document.body.appendChild(run);
-    function safe(fn){ try{ fn(); }catch(e){} }
-    function gearOf(u){ var eq=u&&u.eq||{}, list=typeof I==='function'?I():[]; function find(id){return list.find(function(x){return x.id===id})||null} var w=find(eq.weapon),a=find(eq.armor); return {str:(u.str||0)+(w&&w.str||0)+(a&&a.str||0),def:(u.def||0)+(w&&w.def||0)+(a&&a.def||0),spd:(u.agi||0)}; }
-    function houseAwake(h){ var map={street:0,apt:15,condo:30,man:50,pent:80,comp:120}; if(!h)return{max:0}; return {max:map[h.id]||0}; }
-    function applyHouseAwake(){ if(!U)return; var h=(typeof H==='function'?H():[]).find(function(x){return x.id===U.house}); var b=houseAwake(h); U.maxS=Math.max(50,50+(b.max||0)); if(U.stam==null)U.stam=U.maxS; if(U.stam>U.maxS)U.stam=U.maxS; }
-    function gymGainPreview(s){ if(!U)return 2; var gym=typeof totalGymMult==='function'?totalGymMult():1; return Math.max(2,Math.round((((U[s]||1)*0.085)+((U.level||1)*0.55)+4)*gym)); }
-    function gymGain(s){ return Math.max(2,Math.round(gymGainPreview(s)*(0.88+Math.random()*0.24))); }
-    function persistUser(){ if(!U||!U.username)return; try{ localStorage.setItem('de_char_'+String(U.username).toLowerCase(), JSON.stringify(U)); }catch(e){} }
-    function fightScene(name, done){ var t=G&&G.users&&G.users[name]; if(!t){ if(done) done(); return; } var box=document.getElementById('fight-ring'); if(!box){ box=document.createElement('div'); box.id='fight-ring'; document.body.appendChild(box); } var you=U&&U.username||'You', Y=gearOf(U), T=gearOf(t); box.innerHTML='<div class="frs"><div class="fp"><div class="fn">'+you+'</div><div>STR '+Y.str+' SPD '+Y.spd+' DEF '+Y.def+'</div><div class="bar"><i id="hp-you"></i></div></div><div class="fp"><div class="fn">'+name+'</div><div>STR '+T.str+' SPD '+T.spd+' DEF '+T.def+'</div><div class="bar"><i id="hp-them"></i></div></div></div><div id="flog"></div><div id="fres"></div>'; box.classList.add('on'); var hy=100,ht=100,n=0; var timer=setInterval(function(){ n++; var youFirst=Y.spd>=T.spd; var dmg=Math.max(3,Math.round((youFirst?Y.str:T.str)*0.2)); if(youFirst) ht=Math.max(0,ht-dmg); else hy=Math.max(0,hy-dmg); var a=document.getElementById('hp-you'); if(a)a.style.width=hy+'%'; var b=document.getElementById('hp-them'); if(b)b.style.width=ht+'%'; var log=document.getElementById('flog'); if(log) log.textContent=(youFirst?you:name)+' hits -'+dmg; if(n>=8||hy<=0||ht<=0){ clearInterval(timer); var r=document.getElementById('fres'); if(r) r.textContent=ht<hy?'You drop them':'You hit the floor'; setTimeout(function(){ box.classList.remove('on'); if(done) done(); },800);} },340); }
-    function hookFight(){ if(typeof doHit==='function' && !doHit._h){ var h=doHit; doHit=function(name){ if(doHit._busy) return; doHit._busy=1; fightScene(name, function(){ try{ h(name);}catch(e){} doHit._busy=0; }); }; doHit._h=1; } }
-    function hookMarket(){ if(typeof rMarket!=='function' || rMarket._rm) return; var orig=rMarket; rMarket=function(){ orig(); if(!U||!G||!G.market) return; var box=document.getElementById('mk-list-box'); if(!box) return; box.querySelectorAll('.mkb,.mk-rm').forEach(function(btn){ var m=G.market[+btn.dataset.i]; if(!m) return; if(String(m.seller).toLowerCase()===String(U.username).toLowerCase()){ btn.textContent='Remove'; btn.className='btn s mk-rm'; btn.onclick=function(){ var idx=+btn.getAttribute('data-i'); var it=G.market[idx]; if(!it||String(it.seller).toLowerCase()!==String(U.username).toLowerCase()) return; if(!U.inv) U.inv=[]; U.inv.push(it.item); G.market.splice(idx,1); persistUser(); if(typeof save==='function') save(); if(typeof ui==='function') ui(); rMarket(); toast('Taken off market'); }; } }); }; rMarket._rm=1; }
-    function paintGymStats(){ if(!U) return; var page=document.getElementById('p-gym'); if(!page) return; var box=document.getElementById('gym-stats'); if(!box){ box=document.createElement('div'); box.id='gym-stats'; var tg=page.querySelector('.tg'); if(tg) tg.parentNode.insertBefore(box,tg); else page.appendChild(box);} var g=gearOf(U); box.innerHTML='<div class="gs"><div class="gk">STR</div><div class="gv">'+g.str+'</div></div><div class="gs"><div class="gk">DEF</div><div class="gv">'+g.def+'</div></div><div class="gs"><div class="gk">SPD</div><div class="gv">'+g.spd+'</div></div><div class="gs"><div class="gk">INT</div><div class="gv">'+(U.int||0)+'</div></div>'; ['str','def','agi','int'].forEach(function(k){ var e=document.getElementById('xb-'+k); if(e) e.textContent='+'+gymGainPreview(k)+' / train'; }); }
-    function hookGym(){ applyHouseAwake(); train=function(s){ if(!U) return; applyHouseAwake(); var cost={str:5,def:5,agi:4,int:4}[s]||5; if((U.stam||0)<cost){ toast('Need Awake'); return; } var gain=gymGain(s); U.stam-=cost; U[s]=(U[s]||0)+gain; persistUser(); if(typeof save==='function') save(); if(typeof ui==='function') ui(); paintGymStats(); toast('+'+gain); }; uGym=function(){ paintGymStats(); }; paintGymStats(); }
-    function hookMenu(){ var bar=document.getElementById('mainnav')||document.querySelector('nav.bn'); if(!bar) return; if(!bar.querySelector('[data-p="inventory"]')){ var b=document.createElement('button'); b.type='button'; b.className='nb'; b.setAttribute('data-p','inventory'); b.innerHTML='<i class="fas fa-briefcase"></i>Inventory'; var prof=bar.querySelector('[data-p="profile"]'); if(prof) bar.insertBefore(b,prof); else bar.appendChild(b); } }
-    function hookPlay(){ if(window._playHook) return; window._playHook=1; document.addEventListener('click',function(e){ var t=e.target.closest('button,.tb,.dj,#tap-awake'); if(!t) return; if(t.id==='tap-awake'){ e.preventDefault(); if(!U)return; applyHouseAwake(); if((U.stam||0)>=(U.maxS||50)){toast('Awake full');return;} var set=(typeof S==='function'?S():{})||{}; var c=set.pa||8; if((U.points||0)<c){toast('Need Points');return;} U.points-=c; U.stam=U.maxS; if(typeof save==='function')save(); if(typeof ui==='function')ui(); toast('Awake refilled'); return; } if(t.classList.contains('tb')){ e.preventDefault(); train(t.dataset.s); } if(t.classList.contains('dj') && typeof doJob==='function'){ e.preventDefault(); doJob(t.dataset.id); } }, true); }
-    function hookPages(){ if(typeof window.showPage==='function' && !window.showPage._all){ var sp=window.showPage; window.showPage=function(id,fs){ try{ sp(id,fs);}catch(e){} if(id==='gym'){ applyHouseAwake(); paintGymStats(); } if(id==='market'){ hookMarket(); if(typeof rMarket==='function') rMarket(); } }; window.showPage._all=1; } }
-    function wire(){ safe(function(){ if(typeof auth==='function') auth(); }); safe(hookFight); safe(hookGym); safe(hookMarket); safe(hookMenu); safe(hookPlay); safe(hookPages); }
-    function afterLoad(){ wire(); try{ document.dispatchEvent(new Event('DOMContentLoaded')); }catch(e){} safe(hookFight); safe(hookMarket); }
-    if(typeof load==='function') Promise.resolve(load()).then(afterLoad).catch(afterLoad); else afterLoad();
-  }).catch(fail);
+    var run=document.createElement('script');
+    run.textContent=gameScript;
+    document.body.appendChild(run);
+    document.addEventListener('click',function(e){
+      var tab=e.target&&e.target.closest&&e.target.closest('#amn button[data-a]');
+      if(!tab)return;
+      e.preventDefault();e.stopPropagation();
+      document.querySelectorAll('#amn button').forEach(function(x){x.classList.remove('on')});
+      document.querySelectorAll('#p-admin .ap').forEach(function(x){x.classList.remove('on');x.style.display='none'});
+      tab.classList.add('on');
+      var panel=document.getElementById('a-'+tab.getAttribute('data-a'));
+      if(panel){panel.classList.add('on');panel.style.display='block'}
+      if(typeof rAd==='function') rAd();
+    },true);
+    function after(){
+      try{ if(typeof admin==='function') admin(); }catch(e){}
+      try{ if(typeof auth==='function') auth(); }catch(e){}
+      try{ if(typeof nav==='function') nav(); }catch(e){}
+    }
+    if(typeof load==='function') Promise.resolve(load()).then(after).catch(after);
+    else after();
+  }
+  next(0);
 })();
